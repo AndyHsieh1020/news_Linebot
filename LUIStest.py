@@ -20,6 +20,6 @@ def predict_sentence_test(prediction_url, body):
 
 #測試 從訓練好的luis app問取得一句話的intent及entity等資料
 prediction_url = 'https://linestocknews-authoring.cognitiveservices.azure.com/luis/v2.0/apps/b8f9254d-0777-46bb-b239-25a08a5f5d55'   # 貼上的你的endpoint url + luis app id
-prediction_sentence = "我要訂閱台積電"
+prediction_sentence = "訂閱聯電"
 prediction_sentence_json = json.dumps(prediction_sentence)
 predict_sentence_test(prediction_url, prediction_sentence_json)

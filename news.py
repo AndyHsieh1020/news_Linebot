@@ -12,7 +12,7 @@ myclient = pymongo.MongoClient("mongodb://localhost:27017/")
 dblist = myclient.list_database_names()
 # dblist = myclient.database_names() 
 if "news" in dblist:
-    print("数据库已存在！")
+    print("資料庫已存在！")
 else:
     mydb = myclient["news"]
     mytable = mydb["chinatimes"]
