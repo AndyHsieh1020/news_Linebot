@@ -6,17 +6,17 @@ from re import search
 from flask import Flask, request, abort
 from linebot import LineBotApi, WebhookHandler
 from linebot.exceptions import InvalidSignatureError
-from linebot.models import MessageEvent, TextMessage, TextSendMessage, PostbackAction, URIAction, MessageAction, TemplateSendMessage, ButtonsTemplate
+from linebot.models import MessageEvent, TextMessage, TextSendMessage, PostbackAction, URIAction, MessageAction, TemplateSendMessage, ButtonsTemplate, PostbackEvent
 
 import requests
 import json
-import time
+import datetime
 import pymongo
-import jieba
+
+now=datetime.datetime.now()
+now=now.strftime('%Y-%M-%D %H:%M:%S')
 
 import configparser
-
-import random
 
 app = Flask(__name__)
 
@@ -44,90 +44,154 @@ def callback():
     return 'OK'
 
 
+
+
+# template 按鈕回呼
+@handler.add(PostbackEvent)
+def handle_postback(event):
+
+    # 接收到 postback 事件時的處理邏輯
+    data = event.postback.data
+
+
+
+# 文字訊息擷取
 @handler.add(MessageEvent, message=TextMessage)
 def pretty_echo(event):
 
     myclient = pymongo.MongoClient("mongodb://localhost:27017/")
     dblist = myclient.list_database_names()
-    json_body = json.loads(str(event))
 
-    '''keyword_dict = []
-    path = 'userdict.txt'
-    f = open(path, 'r')
-    for line in f.readlines():
-        line = line.replace('\n', "")
-        keyword_dict.append(line)
-    f.close()'''
-
-    if "status" in dblist:
-        print("已存在status.db")
+    if "user" in dblist:
+        print("已存在user.db")
     else:
-        mydb = myclient["status"]
-        mytable = mydb["user_status"]
+        mydb = myclient["user"]
 
+    mydb = myclient["user"]
+    mytable = mydb["user_info"]
+
+    json_body = json.loads(str(event))
     input_txt = json_body['message']['text']
 
+
+# 檢查用戶是否在存在在資料庫中
+    if mytable.count_documents({'userid': json_body['source']['userId']}):
+
+        myquery = {"userid": json_body['source']['userId']}
+        mydoc = mytable.find_one(myquery)
+
+        # 檢查用戶是否在正在輸入資料中
+        if input_txt == "加入會員":
+
+            line_bot_api.reply_message(event.reply_token, TextSendMessage("請輸入姓名"))
+
+            newvalues = {"$set": {"status": "enter_name"}}
+            mytable.update_one(myquery, newvalues)
+            
+        elif mydoc["status"] == "enter_name":
+            newvalues = {"$set": {"status": "enter_id", "name": input_txt}}
+            mytable.update_one(myquery, newvalues)
+            line_bot_api.reply_message(
+                event.reply_token, TextSendMessage("請輸入身分證字號"))
+
+        elif mydoc["status"] == "enter_id":
+            newvalues = {"$set": {"status": "enter_phone", "id": input_txt}}
+            mytable.update_one(myquery, newvalues)
+            line_bot_api.reply_message(
+                event.reply_token, TextSendMessage("請輸入電話"))
+
+        elif mydoc["status"] == "enter_phone":
+            newvalues = {"$set": {"status": "enter_email", "phone": input_txt}}
+            mytable.update_one(myquery, newvalues)
+            line_bot_api.reply_message(
+                event.reply_token,
+                TextSendMessage(text="輸入e-mail")
+            )
+        elif mydoc["status"] == "enter_email":
+            newvalues = {"$set": {"status": "none", "email": input_txt}}
+            mytable.update_one(myquery, newvalues)
+            line_bot_api.reply_message(
+                event.reply_token,
+                TextSendMessage(text="輸入完成")
+            )
+
+        if input_txt == "取消會員":
+            myquery = {"userid": json_body['source']['userId']}
+            mytable.delete_one(myquery)
+
+    else:
+
+        user_data = {"userid": json_body['source']['userId'],
+                    "status": "none", "name": "none", "id":"none", "phone": "none", "email": "none", "in_day":now}
+        mytable.insert_one(user_data)
+
+
+
+
+    # richmenu選單
     if '新手教學' == input_txt:
-        temp_data = {"status": '訂閱關鍵字',"userid": json_body['source']['userId']}
-    elif '優惠方案' == input_txt:
-        status_flag = '解除訂閱關鍵字'
+
         line_bot_api.reply_message(
             event.reply_token,
-            TextSendMessage(text="已解除訂閱x")
+            TextSendMessage(text="移轉到網頁？")
+        )
+    elif '優惠方案' == input_txt:
+
+        line_bot_api.reply_message(
+            event.reply_token,
+            TextSendMessage(text="我不知道這樣做啥")
         )
     elif '會員專區' == input_txt:
-        status_flag = '查詢帳戶資訊'
 
         line_bot_api.push_message(json_body['source']['userId'], TemplateSendMessage(
             alt_text='ButtonsTemplate',
             template=ButtonsTemplate(
                 thumbnail_image_url='https://steam.oxxostudio.tw/download/python/line-template-message-demo.jpg',
-                title='OXXO.STUDIO',
-                text='這是按鈕樣板',
+                title='會員專區',
+                text='會員專區',
                 actions=[
-                    PostbackAction(
+                    MessageAction(
                         label='加入',
-                        data='加入'
+                        text='加入會員'
                     ),
-                    PostbackAction(
+                    MessageAction(
                         label='取消',
-                        data='取消'
+                        text='取消會員'
                     )
                 ]
             )
         ))
     elif '訂閱內容' == input_txt:
-        status_flag = '加入會員'
+
         line_bot_api.reply_message(
             event.reply_token,
-            TextSendMessage(text="請輸入姓名")
+            TextSendMessage(text="請輸入您想訂閱的內容")
         )
-        process_status = '輸入姓名'
-        # user_data = {"userid": json_body['source']['userId'] , "姓名": "", "電話": "", "email": "","剩餘天數": 30,"訂閱方案": "","訂閱公司+關鍵字":"","訂閱開始時間":"" }
+
     elif '查詢修改' == input_txt:
 
         line_bot_api.push_message(json_body['source']['userId'], TemplateSendMessage(
             alt_text='ButtonsTemplate',
             template=ButtonsTemplate(
                 thumbnail_image_url='https://steam.oxxostudio.tw/download/python/line-template-message-demo.jpg',
-                title='OXXO.STUDIO',
-                text='這是按鈕樣板',
+                title='查詢修改',
+                text='查詢修改',
                 actions=[
-                    PostbackAction(
+                    MessageAction(
                         label='基本資料',
-                        data='基本資料'
+                        text='基本資料'
                     ),
-                    PostbackAction(
+                    MessageAction(
                         label='方案',
-                        data='方案'
+                        text='方案'
                     ),
-                    PostbackAction(
+                    MessageAction(
                         label='內容',
-                        data='內容'
+                        text='內容'
                     ),
-                    PostbackAction(
+                    MessageAction(
                         label='修改資料',
-                        data='修改資料'
+                        text='修改資料'
                     )
                 ]
             )
@@ -135,12 +199,12 @@ def pretty_echo(event):
 
     elif '其它' == input_txt:
 
-         line_bot_api.push_message(json_body['source']['userId'], TemplateSendMessage(
+        line_bot_api.push_message(json_body['source']['userId'], TemplateSendMessage(
             alt_text='ButtonsTemplate',
             template=ButtonsTemplate(
                 thumbnail_image_url='https://steam.oxxostudio.tw/download/python/line-template-message-demo.jpg',
-                title='OXXO.STUDIO',
-                text='這是按鈕樣板',
+                title='其他功能',
+                text='其他功能',
                 actions=[
                     PostbackAction(
                         label='最新公告',
@@ -153,33 +217,12 @@ def pretty_echo(event):
                 ]
             )
         ))
-        
+
     else:
         line_bot_api.reply_message(
             event.reply_token,
             TextSendMessage(text="請按下方功能鍵互動")
         )
-
-    '''if "user" in dblist:
-            print("資料庫存在！")
-            mydb = myclient["users"]
-            mytable = mydb["user_info"]
-            search = { "userid":json_body['source']['userId'] }
-            if mytable.count_documents(search)==0:
-                mytable.insert_one(user_data)
-            else:
-                sub_keyword=mytable.find({ "user_id":json_body['source']['userId'] },{"訂閱公司+關鍵字":1})+','+
-                newvalues = { "$set": { "訂閱公司+關鍵字":sub_keyword }}
-                mytable.update_one(search, newvalues)
-                line_bot_api.reply_message(
-                    event.reply_token,
-                    TextSendMessage(text="已加入訂閱清單")
-                )
-        else:
-            print("不存在該資料庫")
-            mydb = myclient["user"]
-            mytable = mydb["user_info"]
-            mytable.insert_one(user_data)'''
 
 
 if __name__ == "__main__":
