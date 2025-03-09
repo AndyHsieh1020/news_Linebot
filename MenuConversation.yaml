@@ -1,0 +1,75 @@
+toturials:
+  steps:
+    name:
+      next: "請輸入您的身分證字號："
+      save_to: "user_name"
+    id:
+      next: "請輸入您的電話號碼："
+      save_to: "user_id"  
+    phone:
+      next: "請輸入您的電子郵件："
+      save_to: "user_phone"
+    email:
+      next: "註冊完成！您的資訊如下：\n姓名：{user_name}\n身分證字號：{user_id}\n電話：{user_phone}\nEmail：{user_email}"
+      save_to: "user_email"
+      finish: true
+discount:
+  start: "請輸入您的姓名："
+  steps:
+    name:
+      next: "請輸入您的身分證字號："
+      save_to: "user_name"
+    id:
+      next: "請輸入您的電話號碼："
+      save_to: "user_id"  
+    phone:
+      next: "請輸入您的電子郵件："
+      save_to: "user_phone"
+    email:
+      next: "註冊完成！您的資訊如下：\n姓名：{user_name}\n身分證字號：{user_id}\n電話：{user_phone}\nEmail：{user_email}"
+      save_to: "user_email"
+      finish: true
+member:
+  register:
+    req_name: "請輸入您的姓名："
+      save_to: "user_name"
+    req_id: "請輸入您的身分證字號："
+      save_to: "user_id"
+    req_phone: "請輸入您的電話號碼："
+      save_to: "user_phone"  
+    req_email: "請輸入您的電子郵件："
+      save_to: "user_email"
+    finish: true
+  unregister:
+sub_content:
+  start: "請輸入您的姓名："
+  steps:
+    name:
+      next: "請輸入您的身分證字號："
+      save_to: "user_name"
+    id:
+      next: "請輸入您的電話號碼："
+      save_to: "user_id"  
+    phone:
+      next: "請輸入您的電子郵件："
+      save_to: "user_phone"
+    email:
+      next: "註冊完成！您的資訊如下：\n姓名：{user_name}\n身分證字號：{user_id}\n電話：{user_phone}\nEmail：{user_email}"
+      save_to: "user_email"
+      finish: true
+query_and_modify:
+  start: "請輸入您的姓名："
+  steps:
+    name:
+      next: "請輸入您的身分證字號："
+      save_to: "user_name"
+    id:
+      next: "請輸入您的電話號碼："
+      save_to: "user_id"  
+    phone:
+      next: "請輸入您的電子郵件："
+      save_to: "user_phone"
+    email:
+      next: "註冊完成！您的資訊如下：\n姓名：{user_name}\n身分證字號：{user_id}\n電話：{user_phone}\nEmail：{user_email}"
+      save_to: "user_email"
+      finish: true
